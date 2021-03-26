@@ -994,7 +994,19 @@ bool_t cuda_free_host_1_svc(int index, int *result, struct svc_req *rqstp)
     RECORD_API(int);
     RECORD_SINGLE_ARG(index);
     *result = cudaErrorInitializationError;
-    if (socktype != UNIX) {
+    if (socktype == TCP) {
+#ifdef WITH_IB
+
+        ib_free_memreg(hainfo[index].server_ptr, index);
+        hainfo[index].server_ptr = 0;
+        *result = cudaSuccess;
+        return 1;
+        
+#else
+        LOGE(LOG_ERROR, "infiniband is disabled.");
+        goto cleanup;
+#endif // WITH_IB
+    } else if (socktype != UNIX) {
         *result = cudaSuccess;
         return 1;
     }
